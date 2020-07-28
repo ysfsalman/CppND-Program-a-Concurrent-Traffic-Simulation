@@ -43,14 +43,14 @@ void TrafficLight::waitForGreen()
     // FP.5b : add the implementation of the method waitForGreen, in which an infinite while-loop 
     // runs and repeatedly calls the receive function on the message queue. 
     // Once it receives TrafficLightPhase::green, the method returns.
-    while(true){
-        TrafficLightPhase T = _trafficLightQueue->receive();    
-        if(T = TrafficLightPhase::green) {break;}
+    while(true){ 
+        if(_trafficLightQueue->receive() == TrafficLightPhase::green) {break;}
     }
 }
 
 TrafficLightPhase TrafficLight::getCurrentPhase()
-{
+{   
+    std::lock_guard<std::mutex> lock(_mutex);
     return _currentPhase;
 }
 
@@ -78,19 +78,18 @@ void TrafficLight::cycleThroughPhases()
         
         // check duration
         long timeSinceLastUpdate = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - lastUpdate).count();
-        while(timeSinceLastUpdate >= randCycle){
+        while(timeSinceLastUpdate < randCycle){
             timeSinceLastUpdate = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - lastUpdate).count();
+            //std::cout<<"cycle : "<<randCycle<<"while : "<<timeSinceLastUpdate<<std::endl;
         }
-        
         // toggle traffic light
         _currentPhase = (_currentPhase == TrafficLightPhase::green) ? TrafficLightPhase::red : TrafficLightPhase::green; 
         
         // send update message to queue
-        //futures.emplace_back(std::async(std::launch::async, &MessageQueue<TrafficLightPhase>::send, queue, std::move(_currentPhase)));
-        _trafficLightQueue->send(std::move(_currentPhase));
+        _trafficLightQueue->send(std::move(_currentPhase));    
         
-        std::this_thread::sleep_for(std::chrono::milliseconds(1));
         lastUpdate = std::chrono::system_clock::now();
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
 
 }

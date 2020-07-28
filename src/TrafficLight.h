@@ -40,7 +40,6 @@ class TrafficLight: public TrafficObject, public std::enable_shared_from_this<Tr
 public:
     // constructor / desctructor
     TrafficLight();
-    ~TrafficLight();
     // getters / setters
     TrafficLightPhase getCurrentPhase();
     // typical behaviour methods
